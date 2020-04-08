@@ -1,21 +1,27 @@
 lock throttle to 1.
 print "blast off!".
 
+set targetApoaps to 75000.
+set targetPeriaps to 65000.
+
 function Main{
+
 	doCountdown().
 	mySteering().
 	doSafeStage().
-	until apoapsis > 72000 {
+	until apoapsis > targetApoaps {
+		
 		getInfo().
 		mySteering().
 		
 	}
 	doOrbitalInsertion().
-	doDeorbit().
-	print "Main is over".
+	//doDeorbit().
+	returnPlayerControl().
 }
 
 function doSafeStage{
+
 	wait until stage:ready.
 	stage.
 
@@ -33,64 +39,199 @@ function doCountdown{
 
 function getInfo {
 
-//print "Heading: " + ship:heading at (0,3).
-print "Apoapsis: " + ship:apoapsis at (0,4).
-print "Periapsis: " + ship:periapsis at (0,5).
-print "Facing: " + ship:facing at (0,6).
-print "Velocity: " + ship:velocity:surface:mag at (0,7).
-print "ETA Apoapsis: " + ETA:apoapsis at (0,8).
-print "ETA Periapsis: " + ETA:periapsis at (0,9).
-print "rotasjon: " + (100-((ship:velocity:surface:mag)/10)) at (0,10).
+	print "Velocity: " + round(ship:velocity:surface:mag,1) at (0,3).
+	
+	print "Apoapsis: " + round(ship:apoapsis,1) at (0,5).
+	print "Periapsis: " + round(ship:periapsis,1) at (0,6).
 
-wait 0.
+	print "ETA Apoapsis: " + round(ETA:apoapsis,1) at (0,8).
+	print "ETA Periapsis: " + round(ETA:periapsis,1) at (0,9).	
+
+
+//	print "rotasjon: " + round((100-((ship:velocity:surface:mag)/10)),1) at (0,12).
+//	print "VANG: " + round(vAng(Prograde:vector,ship:facing:vector),1) at (0,14).
+//	print "Facing: " + ship:facing at (0,16).
+//	print "Heading: " + round(ship:heading,1) at (0,3).
+	wait 0.
 
 
 }
 function mySteering{
-//declare parameter rotasjon.
-set rotasjon to (100-((ship:velocity:surface:mag)/10)).
-//if 90-((ship:velocity:surface:mag)/10) < 0 {set rotasjon to (90-(ship:velocity:surface:mag/10)).}else{set rotasjon to 90.}
-//print "Velocity: " + ship:velocity:surface:mag.
-//print (100-((ship:velocity:surface:mag)/12)).
-//print rotasjon.
-if rotasjon > 90{lock steering to heading(90,90).}
-else if rotasjon > 25{
-lock steering to heading(90,rotasjon).}
-else{lock steering to prograde.}
+
+	set rotasjon to (100-((ship:velocity:surface:mag)/10)).
+		
+		if rotasjon > 90{
+		
+			lock steering to heading(0,90).
+			stageChecker().
+		}
+		
+		else if rotasjon > 10{
+			
+			lock steering to heading(90,rotasjon).
+			stageChecker().
+		}
+
+		else if vAng(Prograde:vector,ship:facing:vector) > 1 {
+	
+			lock steering to heading(90,10).
+			stageChecker().
+		}
+
+		else if prograde < 5{
+			
+			lock steering to heading(90,5).
+			stageChecker().
+		}
+		
+		else {
+		
+			lock steering to prograde.
+			stageChecker().
+		
+		}
+
 }
 
 function doOrbitalInsertion {
 
-print "MECO".
-until ETA:apoapsis < 12 {
-getInfo().
-lock throttle to 0.
-set steeringmanager:maxstoppingtime to 1.
-lock steering to heading(90,0).
-}until periapsis > 70000 {
-getInfo().
-if ETA:apoapsis < 12 {
-lock throttle to 1.
-lock steering to heading(90,0).}
-else if ETA:Apoapsis > 13 and apoapsis < 74000 {lock throttle to 0.5.}
-else if apoapsis > 74000{lock throttle to 0.4.
-lock steering to heading(90,355).}
-}
-print "IN SPACE!".
-lock throttle to 0.
+	PRINT "**                                              **".
+	PRINT "**                MECO                          **".
+	PRINT "**                                              **".
+	
+	
+	
+	until ETA:apoapsis < 13 {
+		getInfo().
+		lock throttle to 0.
+		set steeringmanager:maxstoppingtime to 1.
+		lock steering to heading(90,0).
+//		dophysicsWarpStart().
+		
+	}
+	
+//	dophysicsWarpStop().
+	
+	until periapsis > 65000 {
+		stageChecker().
+		getInfo().
+		
+		if ETA:apoapsis < 12 {
+		
+			lock throttle to 1.
+			lock steering to heading(90,0).
+			
+			if ETA:apoapsis < 5{
+			
+				lock throttle to 1.
+				lock steering to heading(90,10).
+				
+			}
+		}
+			else if ETA:Apoapsis > 13 and apoapsis < targetApoaps {
+
+				until ETA:Apoapsis < 6 {
+					
+					getInfo().
+					lock throttle to 0.
+				
+				}
+				
+			}		
+	}
+	
+	lock throttle to 0.
 }
 
 function doDeorbit {
-lock steering to retrograde.
-wait 10.
-until periapsis < 56000{
-getInfo().
-lock throttle to 0.1.
-}
-lock throttle to 0.
-wait 1.
-doSafeStage.
+
+	lock steering to retrograde.
+	wait 10.
+	until periapsis < 56000{
+	getInfo().
+	lock throttle to 0.1.
+	}
+	lock throttle to 0.
+	wait 1.
+	doSafeStage.
 }
 
+function stageChecker {
+
+	LIST ENGINES IN elist.
+		PRINT "Stage: " + STAGE:NUMBER AT (0,0).
+		
+		FOR e IN elist {
+			IF e:FLAMEOUT {
+			
+				doSafeStage().
+
+				LIST ENGINES IN elist.
+				CLEARSCREEN.
+				BREAK.
+			}
+		}
+
+}
+
+//FUNGERER IKKE
+function dophysicsWarpStart{
+set warpState to kuniverse:timewarp:mode.
+set warpRateState to kuniverse:timewarp:warp.
+
+	if kuniverse:timewarp:mode = "PHYSICS" and kuniverse:timewarp:warp = 0{
+		
+		
+		print warpState at (0,20).
+		set kuniverse:timewarp:warp to 2.
+		wait 0.1.
+	
+	}
+	else if kuniverse:timewarp:mode = "RAILS"{
+	
+		set kuniverse:timewarp:warp to 0.
+		
+	
+	}
+	
+
+}
+//FUNGERE IKKE
+function dophysicsWarpStop {
+
+set kuniverse:timewarp:warp to 0.
+
+}
+
+Function returnPlayerControl {
+
+	CLEARSCREEN.
+
+	PRINT "**                                              **".
+	PRINT "**                                              **".
+	PRINT "**                                              **".
+	PRINT "**           Transferring control back  to      **".
+	PRINT "**                                              **".
+	PRINT "**                                              **".
+	PRINT "**                      _                       **".
+	PRINT "**                     / \                      **".
+	PRINT "**                    |.-.|                     **".
+	PRINT "**                    |   |                     **".
+	PRINT "**                    | H |                     **".
+	PRINT "**                    | E |                     **".
+	PRINT "**                    | L |                     **".
+	PRINT "**                  _ | D | _                   **".
+	PRINT "**                 / \| I |/ \                  **".
+	PRINT "**                |   | G |   |                 **".
+	PRINT "**                |   | R |   |                 **".
+	PRINT "**               ,'   | I |   '.                **".
+	PRINT "**             ,' |   | S |   | `.              **".
+	PRINT "**           .'___|___|_ _|___|___'.            **".
+	PRINT "**                 /_\ /_\ /_\                  **".
+	PRINT "**                                              **".
+	PRINT "**                                              **".
+	PRINT "**                                              **".
+
+}
 
 Main().
