@@ -2,7 +2,7 @@ lock throttle to 1.
 print "blast off!".
 
 set targetApoaps to 75000.
-set targetPeriaps to 65000.
+set targetPeriaps to 70000.
 
 function Main{
 
@@ -16,7 +16,7 @@ function Main{
 		
 	}
 	doOrbitalInsertion().
-	//doDeorbit().
+	doDeorbit().
 	returnPlayerControl().
 }
 
@@ -83,10 +83,10 @@ function mySteering{
 			lock steering to heading(90,5).
 			stageChecker().
 		}
-		
+	
 		else {
 		
-			lock steering to prograde.
+			lock steering to srfprograde.
 			stageChecker().
 		
 		}
@@ -112,7 +112,7 @@ function doOrbitalInsertion {
 	
 //	dophysicsWarpStop().
 	
-	until periapsis > 65000 {
+	until periapsis > targetPeriaps {
 		stageChecker().
 		getInfo().
 		
@@ -128,6 +128,12 @@ function doOrbitalInsertion {
 				
 			}
 		}
+			else if ETA:Apoapsis > ETA:Periapsis{
+			
+				lock throttle to 1.
+				lock steering to heading(90,40).
+			
+			}
 			else if ETA:Apoapsis > 13 and apoapsis < targetApoaps {
 
 				until ETA:Apoapsis < 6 {
@@ -147,7 +153,7 @@ function doDeorbit {
 
 	lock steering to retrograde.
 	wait 10.
-	until periapsis < 56000{
+	until periapsis < 35000{
 	getInfo().
 	lock throttle to 0.1.
 	}
@@ -157,20 +163,21 @@ function doDeorbit {
 }
 
 function stageChecker {
-
-	LIST ENGINES IN elist.
-		PRINT "Stage: " + STAGE:NUMBER AT (0,0).
-		
-		FOR e IN elist {
-			IF e:FLAMEOUT {
+	if STAGE:NUMBER > 0{
+		LIST ENGINES IN elist.
+			PRINT "Stage: " + STAGE:NUMBER AT (0,0).
 			
-				doSafeStage().
+			FOR e IN elist {
+				IF e:FLAMEOUT {
+				
+					doSafeStage().
 
-				LIST ENGINES IN elist.
-				CLEARSCREEN.
-				BREAK.
+					LIST ENGINES IN elist.
+					CLEARSCREEN.
+					BREAK.
+				}
 			}
-		}
+	}
 
 }
 
@@ -210,7 +217,7 @@ Function returnPlayerControl {
 	PRINT "**                                              **".
 	PRINT "**                                              **".
 	PRINT "**                                              **".
-	PRINT "**           Transferring control back  to      **".
+	PRINT "**       Transferring control back  to  you     **".
 	PRINT "**                                              **".
 	PRINT "**                                              **".
 	PRINT "**                      _                       **".
