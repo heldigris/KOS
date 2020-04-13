@@ -1,23 +1,36 @@
-lock throttle to 1.
-print "blast off!".
 
-set targetApoaps to 75000.
+//"completed" functions are (doCountdown, mySteering, circularizationNode, returnPlayerControl)
+// the rest are WIP
+
+set targetApoaps to 80000.
 set targetPeriaps to 70000.
 set targetDeorbitPeriapsis to 35000.
 
-function Main{
 
+
+function Main{
+	lock throttle to 1.
 	doCountdown().
-	mySteering().
-	doSafeStage().
+//	mySteering().
+//	doSafeStage().
 	until apoapsis > targetApoaps {
 		
 		getInfo().
 		mySteering().
+		stageChecker().
 		
 	}
-	doOrbitalInsertion().
-	doDeorbit().
+//	doOrbitalInsertion().
+//	doDeorbit().
+	lock throttle to 0.
+//	until ship:altitude > 70000{
+	
+	getInfo().
+	
+	}
+	circularizationNode().
+//	wait 1.
+//	doManouver().
 	returnPlayerControl().
 }
 
@@ -40,13 +53,13 @@ function doCountdown{
 
 function getInfo {
 
-	print "Velocity: " + round(ship:velocity:surface:mag,1) at (0,3).
+	print "Velocity: " + round(ship:velocity:surface:mag,1) at (0,4).
 	
-	print "Apoapsis: " + round(ship:apoapsis,1) at (0,5).
-	print "Periapsis: " + round(ship:periapsis,1) at (0,6).
+	print "Apoapsis: " + round(ship:apoapsis,1) at (0,6).
+	print "Periapsis: " + round(ship:periapsis,1) at (0,7).
 
-	print "ETA Apoapsis: " + round(ETA:apoapsis,1) at (0,8).
-	print "ETA Periapsis: " + round(ETA:periapsis,1) at (0,9).	
+	print "ETA Apoapsis: " + round(ETA:apoapsis,1) at (0,9).
+	print "ETA Periapsis: " + round(ETA:periapsis,1) at (0,10).	
 
 
 //	print "rotasjon: " + round((100-((ship:velocity:surface:mag)/10)),1) at (0,12).
@@ -58,51 +71,52 @@ function getInfo {
 
 }
 function mySteering{
-
-	PRINT "**                                              **".
-	PRINT "**         Launching to target apoapsis         **".
-	PRINT "**                                              **".
-
+//CLEARSCREEN.
+	PRINT "**                                              **" at (0,1).
+	PRINT "**                Ascending                     **" at (0,2).
+	PRINT "**                                              **" at (0,3).
+	
 	set rotasjon to (100-((ship:velocity:surface:mag)/10)).
 		
 		if rotasjon > 90{
 		
 			lock steering to heading(0,90).
-			stageChecker().
+			
 		}
 		
 		else if rotasjon > 10{
 			
 			lock steering to heading(90,rotasjon).
-			stageChecker().
+			
 		}
 
 		else if vAng(Prograde:vector,ship:facing:vector) > 1 {
 	
 			lock steering to heading(90,10).
-			stageChecker().
+			
 		}
 
 		else if prograde < 5{
 			
 			lock steering to heading(90,5).
-			stageChecker().
+			
 		}
-	
+		
 		else {
 		
 			lock steering to srfprograde.
-			stageChecker().
+			
 		
 		}
-
+		
+	
 }
 
 function doOrbitalInsertion {
 
-	PRINT "**                                              **".
-	PRINT "**                     MECO                     **".
-	PRINT "**                                              **".
+	PRINT "**                                              **" at (0,1).
+	PRINT "**                MECO                          **" at (0,2).
+	PRINT "**                                              **" at (0,3).
 	
 	
 	
@@ -111,12 +125,9 @@ function doOrbitalInsertion {
 		lock throttle to 0.
 		set steeringmanager:maxstoppingtime to 1.
 		lock steering to heading(90,0).
-//		dophysicsWarpStart().
 		
 	}
-	
-//	dophysicsWarpStop().
-	
+
 	until periapsis > targetPeriaps {
 		stageChecker().
 		getInfo().
@@ -157,9 +168,9 @@ function doOrbitalInsertion {
 
 function doDeorbit {
 
-	PRINT "**                  Deorbiting                  **".
-	PRINT "**             Target periapsis 35k             **".
-	PRINT "**          Holding retrograde to 15k           **".
+	PRINT "**                Deorbiting                    **" (0,1).
+	PRINT "**           Target periapsis 35k               **" (0,2).
+	PRINT "**         Holding retrograde to 15k            **" (0,3).
 
 	lock steering to retrograde.
 	wait 10.
@@ -181,49 +192,148 @@ function doDeorbit {
 
 function stageChecker {
 	if STAGE:NUMBER > 0{
-		LIST ENGINES IN elist.
+			wait 0.
+			set ignitionlistfalse to list().
+			set ignitionlisttrue to list().
+			set ignitionflameout to list().
+			LIST ENGINES IN elist.
 			PRINT "Stage: " + STAGE:NUMBER AT (0,11).
 			
+			
+			
 			FOR e IN elist {
-				IF e:FLAMEOUT {
+				IF e:ignition{
 				
-					doSafeStage().
-
-					LIST ENGINES IN elist.
-					CLEARSCREEN.
-					BREAK.
+					ignitionListtrue:add(e:ignition).
+					
+					if e:flameout{
+						ignitionflameout:add(e:flameout).
+					}
+					
 				}
-			}
+				else{
+
+					ignitionListfalse:add(e:ignition).
+
+				}
+		}
+			
+		if ignitionflameout:length = ignitionlisttrue:length{
+
+			doSafeStage().
+		
+		}
+	
 	}
+	
+//	print "ignFlamout: " + ignitionflameout:length at (0,31).
+//	print "ignTrue: " + ignitionlisttrue:length at (0,32).
+//	print "ignFalse: " + ignitionListfalse:length at (0,33).
+	
+}
+
+function circularizationNode{
+
+	SET orbitalSpeed TO sqrt((SHIP:BODY:MU / (SHIP:BODY:RADIUS + 
+	SHIP:APOAPSIS))).
+	SET T to time:SECONDS+ETA:APOAPSIS.
+	SET B to VELOCITYAT(ship, time+eta:apoapsis):orbit.
+	SET Dv to orbitalSpeed - B:MAG.
+
+	add node(T,0,0,round(Dv,1)).
 
 }
 
-//FUNGERER IKKE
-function dophysicsWarpStart{
-set warpState to kuniverse:timewarp:mode.
-set warpRateState to kuniverse:timewarp:warp.
+function doManouver{
+	CLEARSCREEN.
+	set nd to nextnode.
+	print "Node in: " + round(nd:eta) + ", DeltaV: " + round(nd:deltav:mag).
+	
+	set max_acc to tsiolkovskys(max_acc).
 
-	if kuniverse:timewarp:mode = "PHYSICS" and kuniverse:timewarp:warp = 0{
-		
-		
-		print warpState at (0,20).
-		set kuniverse:timewarp:warp to 2.
-		wait 0.1.
+	set burn_duration to nd:deltav:mag/max_acc.
 	
+	print "Crude Estimated burn duration: " + round(burn_duration) + "s".
+	
+	wait until nd:eta <= (burn_duration/2 + 60).
+	
+	set np to nd:deltav. //points to node, don't care about the roll direction.
+	lock steering to np.
+
+	//now we need to wait until the burn vector and ship's facing are aligned
+	wait until vang(np, ship:facing:vector) < 0.25.
+
+	//the ship is facing the right direction, let's wait for our burn time
+	wait until nd:eta <= (burn_duration/2).
+
+	//we only need to lock throttle once to a certain variable in the beginning of the loop, and adjust only the variable itself inside it
+	set tset to 0.
+	lock throttle to tset.
+
+	set done to False.
+	//initial deltav
+	set dv0 to nd:deltav.
+	until done{
+		//recalculate current max_acceleration, as it changes while we burn through fuel
+		set max_acc to tsiolkovskys(max_acc).
+
+		//throttle is 100% until there is less than 1 second of time left to burn
+		//when there is less than 1 second - decrease the throttle linearly
+		set tset to min(nd:deltav:mag/max_acc, 1).
+
+		//here's the tricky part, we need to cut the throttle as soon as our nd:deltav and initial deltav start facing opposite directions
+		//this check is done via checking the dot product of those 2 vectors
+		if vdot(dv0, nd:deltav) < 0
+		{
+			print "End burn, remain dv " + round(nd:deltav:mag,1) + "m/s, vdot: " + round(vdot(dv0, nd:deltav),1).
+			lock throttle to 0.
+			break.
+		}
+
+		//we have very little left to burn, less then 0.1m/s
+		if nd:deltav:mag < 0.1
+		{
+			print "Finalizing burn, remain dv " + round(nd:deltav:mag,1) + "m/s, vdot: " + round(vdot(dv0, nd:deltav),1).
+			//we burn slowly until our node vector starts to drift significantly from initial vector
+			//this usually means we are on point
+			wait until vdot(dv0, nd:deltav) < 0.5.
+
+			lock throttle to 0.
+			print "End burn, remain dv " + round(nd:deltav:mag,1) + "m/s, vdot: " + round(vdot(dv0, nd:deltav),1).
+			set done to True.
+		}
 	}
-	else if kuniverse:timewarp:mode = "RAILS"{
-	
-		set kuniverse:timewarp:warp to 0.
-		
-	
-	}
-	
+	unlock steering.
+	unlock throttle.
+	wait 1.
+
+	//we no longer need the maneuver node
+	remove nd.
+
+	//set throttle to 0 just in case.
+	SET SHIP:CONTROL:PILOTMAINTHROTTLE TO 0.
 
 }
-//FUNGERE IKKE
-function dophysicsWarpStop {
 
-set kuniverse:timewarp:warp to 0.
+function tsiolkovskys {
+
+	//tsiolkovskys equation = max_acc
+	set ispValue to 0.
+	LIST ENGINES IN elist.
+	
+	
+	FOR e IN elist {
+		IF e:ignition{
+			set engineThrust to e:possiblethrust/(e:possiblethrust/e:isp).
+			set ispValue to ispValue + engineThrust.
+			print e:isp.
+			
+		}
+	}
+
+	set max_acc to ispValue*constant:g0*ln(ship:wetmass/ship:drymass).
+
+//	return max_acc.
 
 }
 
@@ -234,7 +344,7 @@ Function returnPlayerControl {
 	PRINT "**                                              **".
 	PRINT "**                                              **".
 	PRINT "**                                              **".
-	PRINT "**         Transferring control back to         **".
+	PRINT "**      Transferring control back to            **".
 	PRINT "**                                              **".
 	PRINT "**                                              **".
 	PRINT "**                      _                       **".
