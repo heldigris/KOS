@@ -1,57 +1,59 @@
 
 //"completed" functions are (doCountdown, mySteering, circularizationNode, returnPlayerControl)
+/Cannot launch in any inclination. Only 0
 // the rest are WIP
 
-set targetApoaps to 80000.
+parameter targetApoaps is 80.
+
+set targetApoaps to targetApoaps * 1000.
 set targetPeriaps to 70000.
 set targetDeorbitPeriapsis to 35000.
 
 
 
-function Main{
-	lock throttle to 1.
+FUNCTION Main{
+	CLEARSCREEN.
+	LOCK THROTTLE TO 1.
 	doCountdown().
-//	mySteering().
-//	doSafeStage().
-	until apoapsis > targetApoaps {
+	
+	UNTIL APOAPSIS > targetApoaps {
 		
 		getInfo().
 		mySteering().
 		stageChecker().
 		
 	}
-//	doOrbitalInsertion().
-//	doDeorbit().
-	lock throttle to 0.
-//	until ship:altitude > 70000{
+
+	LOCK THROTTLE TO 0.
+	UNTIL SHIP:ALTITUDE > 70000{
 	
 	getInfo().
 	
 	}
+	
 	circularizationNode().
-//	wait 1.
-//	doManouver().
 	returnPlayerControl().
+	
 }
 
-function doSafeStage{
+FUNCTION doSafeStage{
 
 	wait until stage:ready.
 	stage.
 
 }
 
-function doCountdown{
+FUNCTION doCountdown{
 	//This is our countdown loop, which cycles from 3 to 0
 	PRINT "Counting down:".
 	FROM {local countdown is 3.} UNTIL countdown = 0 STEP {SET countdown to countdown - 1.} DO {
-    PRINT "..." + countdown.
-    WAIT 1. // pauses the script here for 1 second.
+		PRINT "..." + countdown.
+		WAIT 1. // pauses the script here for 1 second.
 	CLEARSCREEN.
-}
+	}
 }
 
-function getInfo {
+FUNCTION getInfo {
 
 	print "Velocity: " + round(ship:velocity:surface:mag,1) at (0,4).
 	
@@ -64,14 +66,16 @@ function getInfo {
 
 //	print "rotasjon: " + round((100-((ship:velocity:surface:mag)/10)),1) at (0,12).
 //	print "VANG: " + round(vAng(Prograde:vector,ship:facing:vector),1) at (0,14).
-//	print "Facing: " + ship:facing at (0,16).
-//	print "Heading: " + round(ship:heading,1) at (0,3).
+//	print "Facing: " + ship:facing at (0,26).
+//	print "Prograde: " + prograde at (0,27).
+//	print "Heading: " + round(ship:heading,1) at (0,28).
 	wait 0.
 
 
 }
-function mySteering{
-//CLEARSCREEN.
+
+FUNCTION mySteering{
+
 	PRINT "**                                              **" at (0,1).
 	PRINT "**                Ascending                     **" at (0,2).
 	PRINT "**                                              **" at (0,3).
@@ -84,35 +88,22 @@ function mySteering{
 			
 		}
 		
-		else if rotasjon > 10{
+		else if rotasjon > 5{
 			
-			lock steering to heading(90,rotasjon).
+			lock steering to heading(45,rotasjon).
 			
 		}
 
-		else if vAng(Prograde:vector,ship:facing:vector) > 1 {
+		else{
 	
-			lock steering to heading(90,10).
-			
-		}
-
-		else if prograde < 5{
-			
 			lock steering to heading(90,5).
 			
 		}
-		
-		else {
-		
-			lock steering to srfprograde.
-			
-		
-		}
-		
-	
+
 }
 
-function doOrbitalInsertion {
+//Working on deprecation
+FUNCTION doOrbitalInsertion {
 
 	PRINT "**                                              **" at (0,1).
 	PRINT "**                MECO                          **" at (0,2).
@@ -166,7 +157,7 @@ function doOrbitalInsertion {
 	getInfo().
 }
 
-function doDeorbit {
+FUNCTION doDeorbit {
 
 	PRINT "**                Deorbiting                    **" (0,1).
 	PRINT "**           Target periapsis 35k               **" (0,2).
@@ -190,7 +181,7 @@ function doDeorbit {
 	}
 }
 
-function stageChecker {
+FUNCTION stageChecker {
 	if STAGE:NUMBER > 0{
 			wait 0.
 			set ignitionlistfalse to list().
@@ -232,7 +223,7 @@ function stageChecker {
 	
 }
 
-function circularizationNode{
+FUNCTION circularizationNode{
 
 	SET orbitalSpeed TO sqrt((SHIP:BODY:MU / (SHIP:BODY:RADIUS + 
 	SHIP:APOAPSIS))).
@@ -244,7 +235,7 @@ function circularizationNode{
 
 }
 
-function doManouver{
+FUNCTION doManouver{
 	CLEARSCREEN.
 	set nd to nextnode.
 	print "Node in: " + round(nd:eta) + ", DeltaV: " + round(nd:deltav:mag).
@@ -315,7 +306,8 @@ function doManouver{
 
 }
 
-function tsiolkovskys {
+// WIP
+FUNCTION tsiolkovskys {
 
 	//tsiolkovskys equation = max_acc
 	set ispValue to 0.
@@ -333,11 +325,11 @@ function tsiolkovskys {
 
 	set max_acc to ispValue*constant:g0*ln(ship:wetmass/ship:drymass).
 
-//	return max_acc.
+	return max_acc.
 
 }
 
-Function returnPlayerControl {
+FUNCTION returnPlayerControl {
 
 	CLEARSCREEN.
 
